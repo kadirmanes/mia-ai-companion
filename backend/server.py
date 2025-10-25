@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import openai
 import asyncio
 
+
 load_dotenv()
 
 app = FastAPI()
@@ -118,6 +119,9 @@ def get_personality_prompt(pet_data: dict) -> str:
     return base_prompt
 
 # API Endpoints
+@app.get("/")
+async def root():
+    return {"status": "MIA Dev Agent is running!"}
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "service": "MIA Backend"}
@@ -187,8 +191,11 @@ async def chat_with_pet(request: ChatRequest):
             raise HTTPException(status_code=404, detail="Pet not found")
         
         # Get recent chat history (last 10 messages)
-        recent_chats = list(chats_collection.find(
-            {"pet_id": request.pet_id}
+        recent_chats = list(
+            chats_collection.find(
+                {"pet_id": request.pet_id}
+            ).sort("_id", -1).limit(10)
+        )
                     # Build messages for OpenAI ChatCompletion
         messages = []
         # Add system prompt based on personality
@@ -210,7 +217,7 @@ async def chat_with_pet(request: ChatRequest):
         except Exception as e:
             response_text = f"{pet['pet_name']} diyor ki: Merhaba!"
 
-        ).sort("timestamp", -1).limit(10))
+
         recent_chats.reverse()
         
         # Analyze user sentiment
