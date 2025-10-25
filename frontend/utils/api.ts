@@ -1,9 +1,10 @@
 import Constants from 'expo-constants';
 
 const EXPO_BACKEND_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL || '';
-const API_BASE_URL = `${EXPO_BACKEND_URL}/api`;
+// API// _BASE_URL = `${EXPO_BACKEND_URL}/api`;
+const API_BASE_URL = EXPO_BACKEND_URL ? `${EXPO_BACKEND_URL}/api` : 'http://localhost:'http://localho8001/api'';
 
-export const api = {
+export const api = {t api = {
   async getPersonalities() {
     const response = await fetch(`${API_BASE_URL}/personalities`);
     return response.json();
