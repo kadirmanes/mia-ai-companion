@@ -7,7 +7,8 @@ from datetime import datetime, timedelta
 from typing import Optional, List
 import os
 from dotenv import load_dotenv
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+# from emergentintegrations.llm.chat import LlmChat, UserMessage
+import openai
 import asyncio
 
 load_dotenv()
@@ -188,6 +189,27 @@ async def chat_with_pet(request: ChatRequest):
         # Get recent chat history (last 10 messages)
         recent_chats = list(chats_collection.find(
             {"pet_id": request.pet_id}
+                    # Build messages for OpenAI ChatCompletion
+        messages = []
+        # Add system prompt based on personality
+        messages.append({"role": "system", "content": personality_prompt})
+        # Include recent chat history
+        for c in recent_chats:
+            messages.append({"role": "user", "content": c.get("User_message", "")})
+            messages.append({"role": "assistant", "content": c.get("ai_response", "")})
+        # Current user message
+        messages.append({"role": "user", "content": request.message})
+        # Call OpenAI chat completion or return fallback
+        try:
+            openai_response = await openai.ChatCompletion.acreate(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                max_tokens=150
+            )
+            response_text = openai_response["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            response_text = f"{pet['pet_name']} diyor ki: Merhaba!"
+
         ).sort("timestamp", -1).limit(10))
         recent_chats.reverse()
         
@@ -197,17 +219,17 @@ async def chat_with_pet(request: ChatRequest):
         
         # Create AI chat instance
         personality_prompt = get_personality_prompt(pet)
-        session_id = f"pet_{request.pet_id}"
+#        session_id = f"pet_{request.pet_id}"
         
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=session_id,
-            system_message=personality_prompt
-        ).with_model("openai", "gpt-4o")
+        #chat = LlmChat(
+            #api_key=EMERGENT_LLM_KEY,
+            #session_id=session_id,
+            #system_message=personality_prompt
+        #).with_model("openai", "gpt-4o")
         
         # Send message
-        user_message = UserMessage(text=request.message)
-        response_text = await chat.send_message(user_message)
+#        user_message = UserMessage(text=request.message)
+#        response_text = await chat.send_message(user_message)
         
         # Save chat to database
         chat_doc = {
